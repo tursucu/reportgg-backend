@@ -6,7 +6,7 @@ from mongoengine import DoesNotExist
 from typing import Type, TypeVar, MutableMapping, Any, Iterable
 from datapipelines import DataSource, DataSink, PipelineContext, Query, validate_query, NotFoundError
 
-from .models import Summoner as MongoSummoner
+from .models import Summoner as MongoSummoner, Match as MongoMatch
 from .common import MongoBaseObject
 from kogmaw.dto.summoner import SummonerDto
 from kogmaw.dto.match import MatchDto, TimelineDto
@@ -101,8 +101,7 @@ class Mongo(DataSource, DataSink):
 
         if "platform" not in item:
             item["platform"] = Region(item["region"]).platform.value
-
-        print(item["lastUpdate"])
+        item["lastUpdate"] = int(datetime.datetime.now().timestamp())
         summoner = MongoSummoner.objects(platform=item["platform"], id=item["id"])
         summoner.update(**item, upsert=True)
 
@@ -119,4 +118,5 @@ class Mongo(DataSource, DataSink):
     @get.register(MatchDto)
     @validate_query(_validate_get_match_query, convert_region_to_platform)
     def get_match(self, query: MutableMapping[str, Any], context: PipelineContext = None) -> MatchDto:
-        pass
+        platform_str = query["platform"].value
+        match = MongoMatch.objects()
