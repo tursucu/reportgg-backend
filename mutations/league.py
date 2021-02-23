@@ -21,7 +21,7 @@ class LeagueExp(graphene.Mutation):
             entries_list = LeagueEntries(queue=queue, region=region, tier=tier, division=division)
 
         for entries in entries_list:
-            print("Mutation Sorgu Name:", entries.summoner.name)
+            print("Mutation Sorgu Name:", entries.summoner.last_update)
             match_history = MatchHistory(summoner=entries.summoner, queues={Queue.ranked_solo_fives})
 
         status = True

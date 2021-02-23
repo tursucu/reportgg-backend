@@ -23,10 +23,6 @@ class MongoBaseObject(object):
                 return now > (self.lastUpdate if self.lastUpdate else 0) + expire_seconds
         return False
 
-    def updated(self):
-        if hasattr(self, "lastUpdate"):
-            self.lastUpdate = datetime.datetime.now().timestamp()
-
     @abstractmethod
     def _table(self):
         pass

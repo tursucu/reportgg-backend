@@ -1,16 +1,17 @@
 import datetime
 
+from mongoengine import *
+from mongoengine import DoesNotExist
+
 from typing import Type, TypeVar, MutableMapping, Any, Iterable
 from datapipelines import DataSource, DataSink, PipelineContext, Query, validate_query, NotFoundError
 
 from .models import Summoner as MongoSummoner
 from .common import MongoBaseObject
 from kogmaw.dto.summoner import SummonerDto
+from kogmaw.dto.match import MatchDto, TimelineDto
 from kogmaw.data import Platform, Region
 from kogmaw.datastores.uniquekeys import convert_region_to_platform
-
-from mongoengine import *
-from mongoengine import DoesNotExist, signals
 
 T = TypeVar("T")
 
@@ -51,20 +52,6 @@ class Mongo(DataSource, DataSink):
         if item._dto_type in self._expirations and self._expirations[item._dto_type] == 0:
             # The expiration time has been set to 0 -> shoud not be cached
             return
-        item.updated()
-        change = {
-            "id": item["id"],
-            "region": item["region"],
-            "accountId": item["accountId"],
-            "name": item["name"],
-            "profileIconId": item["profileIconId"],
-            "puuid": item["puuid"],
-            "revisionDate": item["revisionDate"],
-            "summonerLevel": item["summonerLevel"],
-            "lastUpdate": item["lastUpdate"]
-        }
-        summoner = MongoSummoner.objects(region=item["region"], id=item["id"])
-        summoner.update(**change, upsert=True)
 
     def _first(self, query):
         try:
@@ -82,9 +69,9 @@ class Mongo(DataSource, DataSink):
         except DoesNotExist:
             raise NotFoundError
 
-    ################
-    # Summoner API #
-    ################
+    #####################
+    # Summoner Database #
+    #####################
 
     _validate_get_summoner_query = Query. \
         has("id").as_(str). \
@@ -96,27 +83,40 @@ class Mongo(DataSource, DataSink):
     @get.register(SummonerDto)
     @validate_query(_validate_get_summoner_query, convert_region_to_platform)
     def get_summoner(self, query: MutableMapping[str, Any], context: PipelineContext = None) -> SummonerDto:
-        region_str = query["region"].value
-
-        if "id" in query:
-            print("Id Çalıştı")
-            summoner = self._first(MongoSummoner.objects(region=region_str, id=query["id"]))
-        elif "name" in query:
-            print("Name Çalıştı")
-            summoner = self._first(MongoSummoner.objects(region=region_str, name=query["name"]))
-        elif "accountId" in query:
-            summoner = self._first(MongoSummoner.objects(region=region_str, accountId=query["accountId"]))
+        platform_str = query["platform"].value
+        if "accountId" in query:
+            summoner = self._first(MongoSummoner.objects(platform=platform_str, accountId=query["accountId"]))
+        elif "id" in query:
+            summoner = self._first(MongoSummoner.objects(platform=platform_str, id=query["id"]))
         elif "puuid" in query:
-            summoner = self._first(MongoSummoner.objects(region=region_str, puuid=query["puuid"]))
+            summoner = self._first(MongoSummoner.objects(platform=platform_str, puuid=query["puuid"]))
+        elif "name" in query:
+            summoner = self._first(MongoSummoner.objects(platform=platform_str, name=query["name"]))
         else:
             raise RuntimeError("Impossible!")
         return summoner.to_dto()
 
     @put.register(SummonerDto)
     def put_summoner(self, item: SummonerDto, context: PipelineContext = None) -> None:
-        """if "id" in item:
-            summoner = MongoSummoner.objects(region=item["region"], id=item["id"])
-        summoner.update(**item, upsert=True)"""
-        if not "platform" in item:
+
+        if "platform" not in item:
             item["platform"] = Region(item["region"]).platform.value
-        self._put(MongoSummoner(**item))
+
+        print(item["lastUpdate"])
+        summoner = MongoSummoner.objects(platform=item["platform"], id=item["id"])
+        summoner.update(**item, upsert=True)
+
+    ##################
+    # Match Endpoint #
+    ##################
+
+    # Match
+
+    _validate_get_match_query = Query. \
+        has("id").as_(int).also. \
+        has("platform").as_(Platform)
+
+    @get.register(MatchDto)
+    @validate_query(_validate_get_match_query, convert_region_to_platform)
+    def get_match(self, query: MutableMapping[str, Any], context: PipelineContext = None) -> MatchDto:
+        pass
