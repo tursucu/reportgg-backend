@@ -17,6 +17,7 @@ T = TypeVar("T")
 
 default_expirations = {
     SummonerDto: datetime.timedelta(minutes=1),
+    MatchDto: -1,
 }
 
 
@@ -119,9 +120,10 @@ class Mongo(DataSource, DataSink):
     @validate_query(_validate_get_match_query, convert_region_to_platform)
     def get_match(self, query: MutableMapping[str, Any], context: PipelineContext = None) -> MatchDto:
         platform_str = query["platform"].value
-        match = MongoMatch.objects(platform=query["platform"], id=query["id"])
+        match = MongoMatch.objects(platform=platform_str, id=query["id"])
         return match.to_dto()
 
     @put.register(MatchDto)
     def put_match(self, item: MatchDto, context: PipelineContext = None) -> None:
-        MongoMatch(**item).save()
+        print("NO")
+        print(item["id"], item["gameId"], item)

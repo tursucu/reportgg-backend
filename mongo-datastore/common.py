@@ -10,8 +10,15 @@ class MongoBaseObject(object):
 
     def to_dto(self):
         map = {}
-        for column in self._table:
-            map[column] = getattr(self, column)
+        if hasattr(self, "id"):
+            map["id"] = self["id"]
+        if hasattr(self, "accountId"):
+            map["accountId"] = self["accountId"]
+        if hasattr(self, "name"):
+            map["name"] = self["name"]
+
+        """ for column in self._table:
+            map[column] = getattr(self, column)"""
         return self._dto_type(map)
 
     def has_expired(self, expirations: Mapping[type, float]) -> bool:

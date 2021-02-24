@@ -1,6 +1,6 @@
 import graphene
 from typing import Union
-from kogmaw import LeagueEntries, Queue, Summoner, Region, Patch, Tier, Division, Season, Champions, MatchHistory
+from kogmaw import LeagueEntries, Queue, Summoner, Region, Patch, Tier, Division, Season, Champions, MatchHistory,Match
 
 
 class LeagueExp(graphene.Mutation):
@@ -21,8 +21,11 @@ class LeagueExp(graphene.Mutation):
             entries_list = LeagueEntries(queue=queue, region=region, tier=tier, division=division)
 
         for entries in entries_list:
-            print("Mutation Sorgu Name:", entries.summoner.last_update)
-            match_history = MatchHistory(summoner=entries.summoner, queues={Queue.ranked_solo_fives})
+            print("Mutation Sorgu Name:", entries.summoner.name)
+            match =MatchHistory(summoner=entries.summoner, queues={Queue.ranked_solo_fives})
+            for x in match:
+                p=x.participants[entries.summoner]
+                print(p.version)
 
         status = True
 
