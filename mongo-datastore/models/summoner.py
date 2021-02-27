@@ -12,7 +12,7 @@ class Summoner(Document, MongoBaseObject):
               "platform"]
     meta = {"collection": "SummonerDto", "strict": False}
     region = StringField()
-    id = StringField()
+    id = StringField(primary_key=True)
     accountId = StringField()
     puuid = StringField()
     name = StringField()
@@ -21,3 +21,5 @@ class Summoner(Document, MongoBaseObject):
     summonerLevel = LongField()
     lastUpdate = LongField()
     platform = StringField()
+    sanitizedName = StringField()
+
