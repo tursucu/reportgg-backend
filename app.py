@@ -67,7 +67,7 @@ config["pipeline"] = {
     },
     "DDragon": {},
     "RiotAPI": {
-        "api_key": "RGAPI-0fa59054-724e-463b-b67d-20e9e09b52e2"
+        "api_key": "API_KEY"
     }
 }
 config["logging"] = {
